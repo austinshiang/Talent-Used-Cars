@@ -1,0 +1,1995 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>線上車源表系統 v6.0</title>
+    
+    <!-- iOS / Safari App settings -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="線上車源表">
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/austinshiang/Talent-Used-Cars/refs/heads/main/logo1.jpeg">
+    <link rel="shortcut icon" type="image/png" href="https://raw.githubusercontent.com/austinshiang/Talent-Used-Cars/refs/heads/main/logo1.jpeg">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/austinshiang/Talent-Used-Cars/refs/heads/main/logo1.jpeg">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Urbanist:wght=700;900&family=Noto+Sans+TC:wght=400;500;700;900&display=swap');
+        
+        body { 
+            font-family: 'Noto Sans TC', 'Urbanist', sans-serif; 
+            background-color: #f8fafc; 
+            color: #0f172a; 
+            transition: background 0.3s;
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 99px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #10b981;
+        }
+        
+        #watermark-bg { 
+            position: fixed; 
+            inset: 0; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            opacity: 0.08; 
+            pointer-events: none; 
+            z-index: 0; 
+            transition: all 0.3s ease;
+        }
+        #watermark-img { 
+            max-width: 60%; 
+            max-height: 60%; 
+            object-fit: contain; 
+        }
+
+        .car-row { 
+            background: #ffffff; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 24px; 
+            display: flex; 
+            flex-direction: row;
+            position: relative; 
+            overflow: hidden; 
+            z-index: 10; 
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .car-row:hover { 
+            border-color: #10b981; 
+            transform: translateY(-4px) scale(1.005); 
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.06); 
+        }
+        .car-row:hover .bookmark-ribbon {
+            transform: translateY(2px);
+        }
+
+        .bookmark-ribbon {
+            position: absolute;
+            top: 0;
+            left: 12px;
+            padding: 8px 10px 14px 10px;
+            font-size: 10px;
+            font-weight: 950;
+            color: #ffffff !important;
+            text-align: center;
+            z-index: 25;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 86%, 0 100%);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @media (min-width: 768px) {
+            .bookmark-ribbon {
+                left: 16px;
+                padding: 10px 12px 18px 12px;
+                font-size: 11px;
+            }
+        }
+        
+        .badge-status-instock { background: #10b981 !important; color: #ffffff !important; }
+        .badge-status-consignment { background: #6366f1 !important; color: #ffffff !important; }
+        .badge-status-arriving { background: #f59e0b !important; color: #ffffff !important; }
+        .badge-status-sold { background: #64748b !important; color: #ffffff !important; }
+        .badge-status-reserved { background: #f43f5e !important; color: #ffffff !important; }
+
+        .is-sold { 
+            opacity: 0.85; 
+            border-color: #cbd5e1 !important;
+        }
+        .is-sold .img-box img {
+            filter: grayscale(100%) contrast(110%); 
+            opacity: 0.55; 
+        }
+        .is-sold h3 {
+            color: #64748b !important;
+        }
+        .is-sold .price-box {
+            background-color: #f8fafc !important;
+        }
+        
+        .sold-stamp { 
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%) rotate(-12deg); 
+            border: 4px double #dc2626; 
+            color: #dc2626; 
+            background: rgba(255, 255, 255, 0.96); 
+            padding: 8px 20px; 
+            font-size: 1.5rem; 
+            font-weight: 900; 
+            z-index: 30; 
+            border-radius: 12px; 
+            box-shadow: 0 10px 30px rgba(220, 38, 38, 0.15); 
+            text-align: center; 
+            line-height: 1.1; 
+            pointer-events: none; 
+            letter-spacing: 4px;
+            animation: stamp-appear 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @media (min-width: 768px) {
+            .sold-stamp {
+                border: 6px double #dc2626; 
+                padding: 16px 44px; 
+                font-size: 2.8rem; 
+                border-radius: 20px;
+                letter-spacing: 6px;
+            }
+        }
+
+        @keyframes stamp-appear {
+            0% { transform: translate(-50%, -50%) scale(1.8) rotate(-30deg); opacity: 0; }
+            100% { transform: translate(-50%, -50%) scale(1) rotate(-12deg); opacity: 1; }
+        }
+
+        .modal-transition {
+            transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .custom-dropdown-content { display: none; }
+        .custom-dropdown-content.show { display: block; }
+
+        button, input, select, a, .car-row, .car-brick-item {
+            touch-action: manipulation;
+        }
+
+        @media (max-width: 768px) { 
+            .car-row { 
+                flex-direction: column !important;
+                padding: 12px !important;
+                gap: 12px !important;
+                border-radius: 20px !important;
+            } 
+            
+            .img-box { 
+                width: 100% !important;
+                height: 200px !important;
+                border-radius: 14px !important; 
+                flex-shrink: 0 !important;
+            } 
+            
+            .price-box { 
+                border-left: none !important; 
+                border-top: 1px solid #f1f5f9 !important;
+                width: 100% !important; 
+                padding: 12px 4px 4px 4px !important; 
+                flex-direction: row !important;
+                justify-content: space-between !important; 
+                align-items: center !important; 
+                background-color: transparent !important;
+                flex-shrink: 0 !important;
+            } 
+        }
+
+        /* A4 列印輸出專屬 CSS */
+        @page {
+            size: A4 portrait;
+            margin: 6mm 4mm 6mm 4mm;
+        }
+        @media print {
+            body {
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-size: 8.5px !important;
+            }
+            header, footer, main, #detail-modal, #lightbox-modal, #print-modal, #watermark-bg {
+                display: none !important;
+            }
+            #print-output-container {
+                display: block !important;
+                width: 100% !important;
+            }
+            .print-grid {
+                display: grid !important;
+                grid-template-columns: repeat(5, 1fr) !important;
+                gap: 5px !important;
+                width: 100% !important;
+            }
+            .print-brick-card {
+                break-inside: avoid !important;
+                page-break-inside: avoid !important;
+                border: 1px solid #cbd5e1 !important;
+                border-radius: 6px !important;
+                overflow: hidden !important;
+                background: #ffffff !important;
+                display: flex !important;
+                flex-direction: column !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col pb-12">
+
+    <!-- Watermark Background -->
+    <div id="watermark-bg" class="hidden"><img id="watermark-img" src="" alt="浮水印"></div>
+
+    <header class="bg-white border-b border-slate-200 py-5 px-4 relative z-40 shadow-sm">
+        <div class="max-w-6xl mx-auto space-y-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                <div class="flex items-center space-x-3.5">
+                    <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center overflow-hidden shrink-0 shadow-sm border border-slate-100 p-1 relative">
+                        <img id="header-logo-img" src="https://raw.githubusercontent.com/austinshiang/Talent-Used-Cars/refs/heads/main/logo1.jpeg" alt="線上車源表" class="w-full h-full object-contain transition-all duration-500 opacity-100">
+                    </div>
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-black text-slate-850 tracking-tighter">在庫車輛 <span class="text-emerald-600">線上車源總表</span></h1>
+                        <p class="text-[10px] text-slate-400 font-bold tracking-wider mt-0.5 uppercase">Premium v6.0 </p>
+                    </div>
+                </div>
+                <div class="flex gap-2 w-full md:w-auto">
+                    <button id="btn-toggle-view" onclick="toggleView()" class="flex-1 md:flex-none bg-slate-100 hover:bg-slate-200 text-slate-700 px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-image"></i> 圖文卡片模式
+                    </button>
+                    <button onclick="openPrintModal()" class="flex-1 md:flex-none bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-black shadow-lg shadow-emerald-100 flex items-center justify-center gap-1.5 active:scale-95 transition-all">
+                        <i class="fa-solid fa-print"></i> 列印模式
+                    </button>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="flex flex-wrap items-center justify-start gap-x-5 gap-y-1.5 text-xs bg-slate-50 border border-slate-150 px-4 py-2 rounded-xl shadow-inner">
+                <div class="flex items-center gap-1.5">
+                    <span class="font-bold text-slate-400">目前在庫:</span>
+                    <span id="stat-stock" class="font-black text-emerald-600 text-sm">0</span>
+                </div>
+                <div class="border-l border-slate-200 h-3.5"></div>
+                <div class="flex items-center gap-1.5">
+                    <span class="font-bold text-slate-400">當月購買:</span>
+                    <span id="stat-buy" class="font-black text-blue-600 text-sm">0</span>
+                </div>
+                <div class="border-l border-slate-200 h-3.5 hidden sm:block"></div>
+                <div class="flex items-center gap-1.5">
+                    <span class="font-bold text-slate-400">當月售出:</span>
+                    <span id="stat-month" class="font-black text-rose-500 text-sm">0</span>
+                </div>
+                <div class="border-l border-slate-200 h-3.5 hidden sm:block"></div>
+                <div class="flex items-center gap-1.5">
+                    <span class="font-bold text-slate-400">年度累計:</span>
+                    <span id="stat-year" class="font-black text-slate-700 text-sm">0</span>
+                </div>
+            </div>
+
+            <!-- Filter Options -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-2 text-[11px] sm:text-xs">
+                <div class="col-span-2 relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="search-bar" oninput="render()" placeholder="搜尋品牌、型號、規格、配備..." class="w-full bg-slate-50 text-slate-800 placeholder-slate-400 border border-slate-200 rounded-xl pl-8 pr-3 py-1.5 outline-none focus:ring-2 focus:ring-emerald-500 transition-all font-bold">
+                </div>
+                <div class="custom-dropdown-container relative w-full">
+                    <div onclick="toggleDropdown('dropdown-brand')" class="bg-slate-50 text-slate-700 border border-slate-200 rounded-xl px-2 py-1.5 font-bold outline-none cursor-pointer flex justify-between items-center h-full hover:bg-slate-100 transition-colors">
+                        <span id="label-brand" class="truncate">所有廠牌</span>
+                        <i class="fa-solid fa-chevron-down ml-1 text-slate-400 text-[10px]"></i>
+                    </div>
+                    <div id="dropdown-brand" class="custom-dropdown-content absolute z-50 top-full mt-1 left-0 w-full min-w-[160px] bg-white border border-slate-200 shadow-xl rounded-xl p-2 max-h-60 overflow-y-auto"></div>
+                </div>
+                <div class="custom-dropdown-container relative w-full">
+                    <div onclick="toggleDropdown('dropdown-location')" class="bg-slate-50 text-slate-700 border border-slate-200 rounded-xl px-2 py-1.5 font-bold outline-none cursor-pointer flex justify-between items-center h-full hover:bg-slate-100 transition-colors">
+                        <span id="label-location" class="truncate">所有位置</span>
+                        <i class="fa-solid fa-chevron-down ml-1 text-slate-400 text-[10px]"></i>
+                    </div>
+                    <div id="dropdown-location" class="custom-dropdown-content absolute z-50 top-full mt-1 left-0 w-full min-w-[160px] bg-white border border-slate-200 shadow-xl rounded-xl p-2 max-h-60 overflow-y-auto"></div>
+                </div>
+                <div class="custom-dropdown-container relative w-full">
+                    <div onclick="toggleDropdown('dropdown-sale')" class="bg-slate-50 text-slate-700 border border-slate-200 rounded-xl px-2 py-1.5 font-bold outline-none cursor-pointer flex justify-between items-center h-full hover:bg-slate-100 transition-colors">
+                        <span id="label-sale" class="truncate">所有形式</span>
+                        <i class="fa-solid fa-chevron-down ml-1 text-slate-400 text-[10px]"></i>
+                    </div>
+                    <div id="dropdown-sale" class="custom-dropdown-content absolute z-50 top-full mt-1 left-0 w-full min-w-[160px] bg-white border border-slate-200 shadow-xl rounded-xl p-2 max-h-60 overflow-y-auto">
+                        <label class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded cursor-pointer text-xs"><input type="checkbox" value="零售" onchange="updateFilters()" class="accent-emerald-500 w-3.5 h-3.5"><span class="text-slate-700 font-bold">零售</span></label>
+                        <label class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded cursor-pointer text-xs"><input type="checkbox" value="寄賣" onchange="updateFilters()" class="accent-emerald-500 w-3.5 h-3.5"><span class="text-slate-700 font-bold">寄賣</span></label>
+                    </div>
+                </div>
+                <select id="select-scale" onchange="changeScale(this.value)" class="bg-slate-50 text-slate-700 border border-slate-200 rounded-xl px-2 py-1.5 font-bold outline-none focus:ring-2 focus:ring-emerald-500 transition-all cursor-pointer">
+                    <option value="compact">版面：簡約緊湊</option>
+                    <option value="normal" selected>版面：正常舒適</option>
+                    <option value="large">版面：放大清晰</option>
+                </select>
+                <select id="sort-by" onchange="render()" class="col-span-2 sm:col-span-1 bg-slate-950 text-white border border-slate-800 rounded-xl px-2 py-1.5 font-black outline-none focus:ring-2 focus:ring-emerald-500 transition-all cursor-pointer">
+                    <option value="date-desc">排序：入庫由新到舊</option>
+                    <option value="date-asc">排序：入庫由舊到新</option>
+                    <option value="price-desc">排序：開價由高到低</option>
+                    <option value="price-asc">排序：開價由低到高</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-6xl w-full mx-auto px-4 py-6 relative z-10 flex-grow">
+        <div id="gallery" class="space-y-5">
+            <div class="animate-pulse space-y-6">
+                <div class="h-44 bg-slate-200 rounded-2xl"></div>
+                <div class="h-44 bg-slate-200 rounded-2xl"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 列印模式 Modal -->
+    <div id="print-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white border border-slate-200 max-w-xl w-full rounded-3xl overflow-hidden shadow-2xl relative flex flex-col transform scale-95 opacity-0 modal-transition" id="print-modal-card">
+            <div class="p-5 md:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow">
+                        <i class="fa-solid fa-print"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base md:text-lg font-black text-slate-850">A4 紙本方磚列印設定</h3>
+                        <p class="text-[11px] text-slate-400 font-bold">自訂篩選條件，以一排 5 台方磚樣式輸出至 A4 紙張</p>
+                    </div>
+                </div>
+                <button onclick="closePrintModal()" class="text-slate-400 hover:text-slate-700 w-8 h-8 rounded-full flex items-center justify-center bg-white shadow-sm border border-slate-200">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="p-5 md:p-6 space-y-5 overflow-y-auto max-h-[70vh] text-xs">
+                <div>
+                    <label class="font-black text-slate-700 block mb-2 text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-tag text-emerald-600"></i> 車輛狀態：
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="print-filter-status">
+                        <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100">
+                            <input type="checkbox" value="在庫" checked class="accent-emerald-600 w-4 h-4">
+                            <span class="font-bold text-slate-700">在庫</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100">
+                            <input type="checkbox" value="收訂" checked class="accent-emerald-600 w-4 h-4">
+                            <span class="font-bold text-slate-700">收訂/預訂</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100">
+                            <input type="checkbox" value="即將到港" checked class="accent-emerald-600 w-4 h-4">
+                            <span class="font-bold text-slate-700">即將到港</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100">
+                            <input type="checkbox" value="售出" class="accent-emerald-600 w-4 h-4">
+                            <span class="font-bold text-slate-700">已售出</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="font-black text-slate-700 block mb-2 text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-handshake text-emerald-600"></i> 售買形式：
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="print-filter-sale">
+                        <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100">
+                            <input type="checkbox" value="零售" checked class="accent-emerald-600 w-4 h-4">
+                            <span class="font-bold text-slate-700">零售</span>
+                        </label>
+                        <label class="flex items-center gap-2 p-2 bg-slate-50 border border-slate-200 rounded-xl cursor-pointer hover:bg-slate-100">
+                            <input type="checkbox" value="寄賣" checked class="accent-emerald-600 w-4 h-4">
+                            <span class="font-bold text-slate-700">寄賣</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-black text-slate-700 text-xs flex items-center gap-1.5">
+                            <i class="fa-solid fa-car text-emerald-600"></i> 廠牌篩選：
+                        </label>
+                        <button type="button" onclick="toggleSelectAll('print-filter-brands')" class="text-[11px] text-emerald-600 hover:text-emerald-700 font-bold">全選 / 全取消</button>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto p-2 bg-slate-50 border border-slate-200 rounded-xl" id="print-filter-brands"></div>
+                </div>
+
+                <div>
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="font-black text-slate-700 text-xs flex items-center gap-1.5">
+                            <i class="fa-solid fa-location-dot text-emerald-600"></i> 在庫位置：
+                        </label>
+                        <button type="button" onclick="toggleSelectAll('print-filter-locations')" class="text-[11px] text-emerald-600 hover:text-emerald-700 font-bold">全選 / 全取消</button>
+                    </div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-36 overflow-y-auto p-2 bg-slate-50 border border-slate-200 rounded-xl" id="print-filter-locations"></div>
+                </div>
+            </div>
+
+            <div class="p-4 md:p-5 bg-slate-50 border-t border-slate-150 flex gap-3 justify-end">
+                <button onclick="closePrintModal()" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-bold py-2.5 px-4 rounded-xl text-xs transition-all">
+                    取消關閉
+                </button>
+                <button onclick="executePrint()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-black py-2.5 px-6 rounded-xl text-xs shadow-lg shadow-emerald-100 flex items-center gap-2 active:scale-95 transition-all">
+                    <i class="fa-solid fa-print"></i> 確認列印 (A4 5欄排版)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 列印專用輸出區塊 -->
+    <div id="print-output-container" class="hidden"></div>
+
+    <div id="detail-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white border border-slate-200 max-w-3xl w-full rounded-3xl overflow-hidden shadow-2xl relative max-h-[90vh] flex flex-col transform scale-95 opacity-0 modal-transition" id="modal-card">
+            <button onclick="closeModal()" class="close-btn absolute top-4 right-4 z-10 bg-white/80 hover:bg-white text-slate-500 hover:text-slate-800 w-10 h-10 rounded-full flex items-center justify-center shadow-md hover:scale-105 active:scale-95 transition-all">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="overflow-y-auto flex-grow pb-4">
+                <div class="h-auto aspect-square md:aspect-auto md:h-[400px] w-full bg-slate-100 relative overflow-hidden">
+                    <img id="modal-img" src="" referrerpolicy="no-referrer" alt="車輛大圖" class="w-full h-full object-cover cursor-zoom-in hover:opacity-95 transition-opacity duration-300">
+                    
+                    <div id="modal-sold-stamp" class="hidden absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rotate-[-12deg] border-[8px] border-double border-red-600 text-red-600 bg-white/95 px-8 py-4 rounded-2xl shadow-2xl z-30 font-black text-3xl tracking-widest text-center pointer-events-none">
+                        已售出
+                        <span id="modal-sold-time" class="block text-xs font-black mt-1.5 text-red-500 tracking-normal">成交時間: --</span>
+                    </div>
+
+                    <div id="modal-cert-badge" class="absolute bottom-4 left-4 bg-emerald-600 text-white text-[10px] font-black px-3 py-1.5 rounded-lg shadow-xl uppercase tracking-wider flex items-center">
+                        <i class="fa-solid fa-shield-halved mr-1.5"></i> 認證車源
+                    </div>
+                    <div id="modal-status-badge" class="absolute bottom-4 right-4 px-3 py-1.5 rounded-lg text-xs font-black shadow-xl">
+                        在庫
+                    </div>
+                </div>
+
+                <div id="modal-warning-bar" class="hidden bg-amber-500 text-white py-3.5 px-6 font-black text-sm flex items-center gap-3">
+                    <i class="fa-solid fa-triangle-exclamation text-lg animate-bounce"></i>
+                    <span>警告：本車目前已被「預訂 / 收訂」保留中，為防止一車多買，未經核准請勿重複成交銷售！</span>
+                </div>
+
+                <div id="modal-uncertified-warning-bar" class="hidden bg-rose-50 text-rose-700 py-3.5 px-6 font-black text-sm flex items-center gap-3 border-b border-rose-100">
+                    <i class="fa-solid fa-triangle-exclamation text-lg animate-pulse text-rose-600"></i>
+                    <span>提醒：本車目前「尚未通過第三方認證」！</span>
+                </div>
+
+                <div id="modal-thumbnails-container" class="px-6 md:px-8 pt-4 hidden">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-2">車輛相簿 (點擊可切換主圖)</p>
+                    <div id="modal-thumbnails" class="flex gap-2 overflow-x-auto pb-2"></div>
+                </div>
+
+                <div class="p-6 md:p-8 space-y-6">
+                    <div class="flex flex-col gap-1 pb-6 border-b border-slate-100">
+                        <div class="flex items-center gap-2 mb-1.5">
+                            <span id="modal-brand-badge" class="bg-slate-900 text-white px-2.5 py-1 rounded-md text-xs font-black tracking-wider uppercase">--</span>
+                            <span id="modal-badge-year" class="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md text-xs font-bold">-- 年</span>
+                            <span id="modal-badge-sale" class="px-2.5 py-1 rounded-md text-xs font-bold border">--</span>
+                        </div>
+                        <h2 id="modal-title" class="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">--</h2>
+                    </div>
+
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">詳細規格參數 Detailed Specs</h4>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3.5">
+                            <div class="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">廠牌</p>
+                                <p id="spec-brand" class="text-sm font-black text-slate-800">--</p>
+                            </div>
+                            <div class="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">型號</p>
+                                <p id="spec-model" class="text-sm font-black text-slate-800">--</p>
+                            </div>
+                            <div class="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">車牌號碼</p>
+                                <p id="spec-plate" class="text-sm font-black text-slate-800">--</p>
+                            </div>
+                            <div class="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">出廠年份</p>
+                                <p id="spec-year" class="text-sm font-black text-slate-800">-- 年</p>
+                            </div>
+                            <div class="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">車身號碼 (VIN)</p>
+                                <p id="spec-vin" class="text-sm font-black text-slate-800">--</p>
+                            </div>
+                            <div class="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">排氣量</p>
+                                <p id="spec-displacement" class="text-sm font-black text-slate-800">--</p>
+                            </div>
+                            <div class="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">車身顏色</p>
+                                <p id="spec-color" class="text-sm font-black text-slate-800">--</p>
+                            </div>
+                            <div class="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">行駛里程</p>
+                                <p id="spec-mileage" class="text-sm font-black text-slate-800">-- 萬 km</p>
+                            </div>
+                            <div class="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">燃料形式</p>
+                                <p id="spec-fuel" class="text-sm font-black text-slate-800">--</p>
+                            </div>
+                            <div class="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">在庫位置</p>
+                                <p id="spec-location" class="text-sm font-black text-slate-800">--</p>
+                            </div>
+                            <div class="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">售買形式</p>
+                                <p id="spec-sale" class="text-sm font-black text-slate-800">--</p>
+                            </div>
+                            <div class="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">販售狀態</p>
+                                <p id="spec-status" class="text-sm font-black text-slate-800">--</p>
+                            </div>
+                            <div class="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">購入日期</p>
+                                <p id="spec-buy-date" class="text-sm font-black text-slate-800">--</p>
+                            </div>
+                            <div class="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">在庫天數 / 銷售期</p>
+                                <p id="spec-stock-days" class="text-sm font-black text-emerald-600">--</p>
+                            </div>
+                            <div class="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">驗車資訊</p>
+                                <div id="spec-inspection" class="text-sm font-black text-slate-800">--</div>
+                            </div>
+                            <div class="bg-slate-50/50 p-3.5 rounded-xl border border-slate-100 col-span-2 md:col-span-1">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">第三方專業認證</p>
+                                <p id="spec-cert" class="text-sm font-black">--</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-600 mb-2 flex items-center">
+                            <i class="fa-solid fa-circle-info text-emerald-600 mr-2"></i> 車況說明與備註
+                        </h4>
+                        <div id="modal-remarks" class="bg-slate-50 rounded-2xl p-5 border border-slate-150 text-slate-700 text-sm leading-relaxed whitespace-pre-line">
+                            目前暫無詳細備註。
+                        </div>
+                    </div>
+
+                    <div class="border-t border-slate-100 pt-6 space-y-3">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                            <i class="fa-solid fa-coins text-emerald-600"></i> 價格資訊 Price
+                        </h4>
+                        <div class="bg-emerald-50/60 p-5 rounded-2xl border border-emerald-150 flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] text-emerald-800/70 font-bold uppercase tracking-wider mb-0.5">網路公開開價</p>
+                                <p class="text-xs text-slate-500 font-bold">正式對外販售建議售價</p>
+                            </div>
+                            <div class="flex items-end gap-1">
+                                <p id="spec-price-retail" class="text-3xl font-black text-rose-600 font-mono tracking-tight">--</p>
+                                <span class="text-sm font-black text-rose-600 mb-1">萬</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 bg-slate-50 border-t border-slate-150 flex flex-col sm:flex-row gap-3 justify-end">
+                <button id="btn-share-car" onclick="shareCurrentCar()" class="bg-blue-600 hover:bg-blue-500 text-white font-black py-3.5 px-6 rounded-2xl text-center text-sm shadow-md flex items-center justify-center gap-2 transition-all active:scale-95">
+                    <i class="fa-solid fa-share-nodes"></i> 分享此車輛網址
+                </button>
+                <button id="btn-download-photos" onclick="handleDownloadAll()" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-black py-3.5 px-6 rounded-2xl text-center text-sm shadow-sm flex items-center justify-center gap-2 transition-all">
+                    <i class="fa-solid fa-circle-arrow-down text-emerald-600"></i> 下載所有照片
+                </button>
+                <button onclick="closeModal()" class="bg-slate-900 hover:bg-slate-850 text-white font-black py-3.5 px-6 rounded-2xl text-center text-sm shadow-md flex items-center justify-center gap-2 transition-all">
+                    關閉視窗 Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="lightbox-modal" class="hidden fixed inset-0 z-[60] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out" onclick="closeLightbox(event)">
+        <button onclick="closeLightbox(event)" class="absolute top-6 right-6 text-white/80 hover:text-white hover:scale-110 active:scale-95 text-3xl transition-all w-12 h-12 flex items-center justify-center bg-black/40 rounded-full shadow-lg border border-white/10 z-[70]">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <button id="lightbox-prev-btn" onclick="prevLightboxImage(event)" class="absolute left-4 md:left-8 text-white/70 hover:text-white text-3xl md:text-4xl p-3 md:p-4 bg-black/20 hover:bg-black/50 hover:scale-105 active:scale-95 rounded-full transition-all z-[70] hidden">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+
+        <button id="lightbox-next-btn" onclick="nextLightboxImage(event)" class="absolute right-4 md:right-8 text-white/70 hover:text-white text-3xl md:text-4xl p-3 md:p-4 bg-black/20 hover:bg-black/50 hover:scale-105 active:scale-95 rounded-full transition-all z-[70] hidden">
+            <i class="fa-solid fa-chevron-right font-bold"></i>
+        </button>
+
+        <img id="lightbox-img" src="" referrerpolicy="no-referrer" alt="全螢幕車照" class="max-w-full max-h-[90vh] object-contain rounded-2xl shadow-2xl transition-all duration-300 transform scale-95 opacity-0 select-none">
+    </div>
+
+    <footer class="mt-auto py-6 text-center text-xs text-slate-400">
+        <p>All Rights Reserved. 整合系統 v6.0</p>
+    </footer>
+
+    <script>
+        const apiUrl = "https://script.google.com/macros/s/AKfycbzw-xFPo7RI6W3eRFTVg9VCWtIHfQNuUNWJhvbs763_CwD_Z_yR-TDO6f1n73pczVcb/exec";
+        const currentSystemDate = new Date();
+        
+        let cars = [];
+        let currentSelectedCar = null; 
+        let isListView = 'card';
+        let confidentialPricesVisible = false; 
+        let currentScale = 'normal'; 
+        let filters = { brands: [], locations: [], sales: [] }; 
+
+        let lightboxImages = [];
+        let currentLightboxIndex = 0;
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        // 自動對應「在庫位子」的顏色盤 (動態偵測資料庫中的不同位子)
+        const locationColorPalettes = [
+            'bg-emerald-100 text-emerald-900 border-emerald-300 font-black',
+            'bg-blue-100 text-blue-900 border-blue-300 font-black',
+            'bg-amber-100 text-amber-900 border-amber-300 font-black',
+            'bg-purple-100 text-purple-900 border-purple-300 font-black',
+            'bg-rose-100 text-rose-900 border-rose-300 font-black',
+            'bg-indigo-100 text-indigo-900 border-indigo-300 font-black',
+            'bg-cyan-100 text-cyan-900 border-cyan-300 font-black',
+            'bg-teal-100 text-teal-900 border-teal-300 font-black',
+            'bg-orange-100 text-orange-900 border-orange-300 font-black',
+            'bg-violet-100 text-violet-900 border-violet-300 font-black',
+            'bg-fuchsia-100 text-fuchsia-900 border-fuchsia-300 font-black',
+            'bg-sky-100 text-sky-900 border-sky-300 font-black'
+        ];
+        let locationColorMap = {};
+
+        // 動態更新所有車輛位子的顏色對照表
+        function updateLocationColorMap() {
+            locationColorMap = {};
+            // 提取資料庫中所有出現過且不重複的「在庫位子」
+            const locs = [...new Set(cars.map(c => c["在庫位子"]).filter(l => l && String(l).trim() !== ""))];
+            locs.forEach((loc, index) => {
+                const cleanLoc = String(loc).trim();
+                locationColorMap[cleanLoc] = locationColorPalettes[index % locationColorPalettes.length];
+            });
+        }
+
+        const placeholderImages = [
+            'https://images.unsplash.com/photo-1552519507-da3b142c6e3d?auto=format&fit=crop&w=800&q=80',
+            'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80',
+            'https://images.unsplash.com/photo-1542282088-72c9c27ed0cd?auto=format&fit=crop&w=800&q=80',
+            'https://images.unsplash.com/photo-1580273916550-e323be2ae537?auto=format&fit=crop&w=800&q=80'
+        ];
+
+        const scaleConfig = {
+            compact: {
+                thPadding: 'p-2 text-xs',
+                tdPadding: 'p-2 text-xs',
+                imgWidth: 'w-24 sm:w-28 md:w-36',
+                imgHeight: 'h-24 sm:h-28 md:h-28',
+                contentPadding: 'p-2.5',
+                brandText: 'text-[9px] px-1.5 py-0.5',
+                titleText: 'text-sm md:text-base font-black',
+                tagPadding: 'px-1.5 py-0.5 text-[9px]',
+                tagGap: 'gap-1',
+                priceWidth: '32',
+                pricePadding: 'p-2',
+                priceText: 'text-xl md:text-2xl'
+            },
+            normal: {
+                thPadding: 'p-3 text-xs',
+                tdPadding: 'p-3 text-sm',
+                imgWidth: 'w-full sm:w-48 md:w-64',
+                imgHeight: 'h-48 sm:h-40 md:h-44',
+                contentPadding: 'p-4 md:p-5',
+                brandText: 'text-[10px] md:text-xs px-2 py-0.5',
+                titleText: 'text-base md:text-lg lg:text-xl font-black',
+                tagPadding: 'px-2 py-1 text-[10px] md:text-xs',
+                tagGap: 'gap-1.5 md:gap-2',
+                priceWidth: '48',
+                pricePadding: 'p-4 md:p-5',
+                priceText: 'text-2xl md:text-3xl'
+            },
+            large: {
+                thPadding: 'p-4 text-sm',
+                tdPadding: 'p-4 text-base',
+                imgWidth: 'w-full sm:w-56 md:w-80',
+                imgHeight: 'h-56 sm:h-48 md:h-52',
+                contentPadding: 'p-6 md:p-7',
+                brandText: 'text-xs md:text-sm px-2.5 py-1',
+                titleText: 'text-lg md:text-xl lg:text-2xl font-black',
+                tagPadding: 'px-2.5 py-1 text-xs md:text-sm',
+                tagGap: 'gap-2 md:gap-3',
+                priceWidth: '56',
+                pricePadding: 'p-5 md:p-6',
+                priceText: 'text-3xl md:text-4xl'
+            }
+        };
+
+        window.onload = () => {
+            init();
+            initLightboxGestures();
+        };
+
+        async function init() {
+            try {
+                const res = await fetch(apiUrl);
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                cars = await res.json();
+
+                updateLocationColorMap();
+                updateDashboard();
+                populateFilters();
+                render();
+                
+                checkUrlForSharedCar();
+                checkTodayUpdates();
+            } catch (e) { 
+                console.warn("API 連線異常，啟用測試 Demo 數據模式：", e);
+                loadMockData(); 
+                checkUrlForSharedCar();
+                checkTodayUpdates();
+            }
+        }
+
+        function loadMockData() {
+            cars = [
+                // ... 測試資料 ...
+            ];
+
+            updateLocationColorMap();
+            updateDashboard();
+            populateFilters();
+            render();
+        }
+
+        function getDirectImageUrl(url) {
+            if (!url) return placeholderImages[0];
+            let src = String(url).trim().replace(/^["']|["']$/g, '');
+            if (!src) return placeholderImages[0];
+            
+            // 提取 Google Drive ID 並轉為免跨域驗證 lh3 CDN 圖片網址
+            const driveMatch = src.match(/(?:file\/d\/|id=|lh3\.googleusercontent\.com\/d\/|uc\?id=)([a-zA-Z0-9_-]{25,})/i) 
+                            || src.match(/\/d\/([a-zA-Z0-9_-]{25,})/i)
+                            || src.match(/id=([a-zA-Z0-9_-]{25,})/i);
+            if (driveMatch && driveMatch[1]) {
+                return `https://lh3.googleusercontent.com/d/${driveMatch[1]}`;
+            }
+
+            if (src.includes('imgur.com') && !src.includes('i.imgur.com')) {
+                const imgurMatch = src.match(/imgur\.com\/(?:a\/|gallery\/)?([a-zA-Z0-9]+)/);
+                if (imgurMatch && imgurMatch[1]) {
+                    return `https://i.imgur.com/${imgurMatch[1]}.jpg`;
+                }
+            }
+
+            return src;
+        }
+
+        function parseOtherPhotos(otherPhotosStr) {
+            if (!otherPhotosStr) return [];
+            return String(otherPhotosStr)
+                .split(/[\n,; \t]+/)
+                .map(url => url.trim().replace(/^["']|["']$/g, ''))
+                .filter(url => url.startsWith('http'))
+                .map(url => getDirectImageUrl(url));
+        }
+
+        function handleImageError(img, index) {
+            img.onerror = null;
+            img.src = placeholderImages[index % placeholderImages.length];
+        }
+
+        function checkTodayUpdates() {
+            const todayStr = getOnlyDate(currentSystemDate);
+            const todayCars = cars.filter(c => getOnlyDate(c["購入日期"]) === todayStr);
+            if (todayCars.length > 0) {
+                console.log(`今日新增 ${todayCars.length} 台車輛`);
+            }
+        }
+
+        function changeScale(val) {
+            currentScale = val;
+            render();
+        }
+
+        function escapeHtml(str) {
+            if (!str && str !== 0) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function getLocationColor(loc) {
+            if (!loc) return 'bg-slate-100 text-slate-700 border-slate-300 font-black';
+            const cleanLoc = String(loc).trim();
+            // 若該位子已建立專屬顏色則直接採用
+            if (locationColorMap[cleanLoc]) {
+                return locationColorMap[cleanLoc];
+            }
+            // 備援機制：使用字串 Hash 確保相同名稱永遠取得同一種顏色
+            let hash = 0;
+            for (let i = 0; i < cleanLoc.length; i++) {
+                hash = cleanLoc.charCodeAt(i) + ((hash << 5) - hash);
+            }
+            const idx = Math.abs(hash) % locationColorPalettes.length;
+            return locationColorPalettes[idx];
+        }
+
+        function getStatusBadgeClass(status) {
+            switch (status) {
+                case '在庫': return 'badge-status-instock';
+                case '寄賣': return 'badge-status-consignment';
+                case '即將到港': return 'badge-status-arriving';
+                case '收訂':
+                case '預訂': return 'badge-status-reserved';
+                case '售出': return 'badge-status-sold';
+                default: return 'badge-status-instock';
+            }
+        }
+
+        function getSaleTypeColor(type) {
+            if (type === '寄賣') return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+            return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        }
+
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            const cleanStr = String(dateStr).trim().replace(/\//g, '-');
+            const dateObj = new Date(cleanStr);
+            return isNaN(dateObj.getTime()) ? null : dateObj;
+        }
+
+        function getOnlyDate(dateStr) {
+            const d = parseDate(dateStr);
+            if (!d) return '--';
+            const yyyy = d.getFullYear();
+            const mm = String(d.getMonth() + 1).padStart(2, '0');
+            const dd = String(d.getDate()).padStart(2, '0');
+            return `${yyyy}-${mm}-${dd}`;
+        }
+
+        function calculateDaysBetween(startDate, endDate) {
+            if (!startDate || !endDate) return 0;
+            const diffTime = Math.abs(endDate - startDate);
+            return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        }
+
+        function formatMileage(mileage) {
+            if (!mileage && mileage !== 0) return '--';
+            const val = String(mileage).trim();
+            if (val.includes('萬')) return val;
+            const num = parseFloat(val);
+            if (isNaN(num)) return val;
+            return `${num} 萬 km`;
+        }
+
+        function getCarEffectivePrice(car) {
+            const newP = parseFloat(String(car["新價格"] || '').replace(/[^0-9.]/g, ''));
+            const origP = parseFloat(String(car["開價"] || '').replace(/[^0-9.]/g, ''));
+            if (!isNaN(newP) && newP > 0 && !isNaN(origP) && newP < origP) {
+                return newP;
+            }
+            return isNaN(origP) ? 0 : origP;
+        }
+
+        function getInspectionStatus(car) {
+            if (!car["驗車月份"]) return null;
+            const freq = String(car["驗車頻率"] || "1").trim();
+            const targetMonth = parseInt(car["驗車月份"], 10);
+            if (isNaN(targetMonth)) return null;
+
+            const currentMonth = currentSystemDate.getMonth() + 1;
+            let type = 'normal';
+
+            if (currentMonth === targetMonth) {
+                type = 'due';
+            } else if (currentMonth > targetMonth && (currentMonth - targetMonth) <= 2) {
+                type = 'overdue';
+            } else if ((targetMonth - currentMonth === 1) || (currentMonth === 12 && targetMonth === 1)) {
+                type = 'remind';
+            }
+
+            return { type, freq, targetMonth };
+        }
+
+        function checkUrlForSharedCar() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const sharedCode = urlParams.get('car') || urlParams.get('id');
+            if (sharedCode) {
+                openModalByCode(sharedCode);
+            }
+        }
+
+        function shareCurrentCar() {
+            if (!currentSelectedCar) return;
+            const carCode = currentSelectedCar["編碼"];
+            if (!carCode) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '無法分享',
+                    text: '該車輛無有效編號！',
+                    confirmButtonColor: '#10b981'
+                });
+                return;
+            }
+
+            const shareUrl = `${window.location.origin}${window.location.pathname}?car=${encodeURIComponent(carCode)}`;
+
+            const tempInput = document.createElement('textarea');
+            tempInput.value = shareUrl;
+            tempInput.style.position = 'fixed';
+            tempInput.style.opacity = '0';
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            tempInput.setSelectionRange(0, 99999);
+
+            let copySuccess = false;
+            try {
+                copySuccess = document.execCommand('copy');
+            } catch (err) {
+                copySuccess = false;
+            }
+            document.body.removeChild(tempInput);
+
+            if (copySuccess) {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: '車輛專屬連結已複製到剪貼簿！',
+                    showConfirmButton: false,
+                    timer: 2500
+                });
+            } else {
+                Swal.fire({
+                    title: '分享專屬網址',
+                    html: `<p class="text-xs text-slate-500 mb-2">請複製下方連結進行分享：</p><input type="text" readonly value="${shareUrl}" class="w-full p-2 border border-slate-300 rounded-lg text-xs font-mono bg-slate-50 text-slate-700" onclick="this.select()">`,
+                    confirmButtonColor: '#10b981',
+                    confirmButtonText: '確定'
+                });
+            }
+        }
+
+        function toggleView() {
+            const toggleBtn = document.getElementById('btn-toggle-view');
+            const watermarkBg = document.getElementById('watermark-bg');
+
+            if (isListView === 'card') {
+                isListView = 'list';
+                toggleBtn.innerHTML = `<i class="fa-solid fa-list"></i> 清單總覽模式`;
+                watermarkBg.classList.remove('hidden'); 
+            } else if (isListView === 'list') {
+                isListView = 'brick';
+                toggleBtn.innerHTML = `<i class="fa-solid fa-table-cells"></i> 紙本方磚模式`;
+                watermarkBg.classList.remove('hidden'); 
+            } else {
+                isListView = 'card';
+                toggleBtn.innerHTML = `<i class="fa-solid fa-image"></i> 圖文卡片模式`;
+                watermarkBg.classList.add('hidden');
+            }
+            render();
+        }
+
+        function updateDashboard() {
+            const activeCars = cars.filter(c => c["編碼"] !== "CONFIG_LOGO" && c["編碼"] !== "CONFIG_BULLETIN" && c["編碼"] !== "CONFIG_PASSWORD");
+            const thisYear = currentSystemDate.getFullYear();
+            const thisMonth = currentSystemDate.getMonth();
+            const stock = activeCars.filter(c => c["販售狀態"] !== "售出").length;
+            const sold = activeCars.filter(c => c["販售狀態"] === "售出");
+
+            let mCount = 0; 
+            let yCount = 0;
+            let buyCount = 0;
+
+            activeCars.forEach(c => {
+                if (c["購入日期"]) {
+                    const bDate = parseDate(c["購入日期"]);
+                    if (bDate && bDate.getFullYear() === thisYear && bDate.getMonth() === thisMonth) {
+                        buyCount++;
+                    }
+                }
+            });
+
+            sold.forEach(c => {
+                const sDate = parseDate(c["成交日期"]);
+                if (sDate) {
+                    if (sDate.getFullYear() === thisYear) {
+                        yCount++;
+                        if (sDate.getMonth() === thisMonth) {
+                            mCount++;
+                        }
+                    }
+                }
+            });
+
+            document.getElementById('stat-stock').innerText = stock;
+            document.getElementById('stat-buy').innerText = buyCount; 
+            document.getElementById('stat-month').innerText = mCount;
+            document.getElementById('stat-year').innerText = yCount;
+        }
+
+        function toggleDropdown(id) {
+            document.querySelectorAll('.custom-dropdown-content').forEach(el => {
+                if(el.id !== id) el.classList.remove('show');
+            });
+            document.getElementById(id).classList.toggle('show');
+        }
+
+        window.addEventListener('click', function(e) {
+            if (!e.target.closest('.custom-dropdown-container')) {
+                document.querySelectorAll('.custom-dropdown-content').forEach(el => {
+                    el.classList.remove('show');
+                });
+            }
+        });
+
+        function updateFilters() {
+            filters.brands = Array.from(document.querySelectorAll('#dropdown-brand input:checked')).map(cb => cb.value);
+            filters.locations = Array.from(document.querySelectorAll('#dropdown-location input:checked')).map(cb => cb.value);
+            filters.sales = Array.from(document.querySelectorAll('#dropdown-sale input:checked')).map(cb => cb.value);
+
+            document.getElementById('label-brand').innerText = filters.brands.length ? `廠牌 (${filters.brands.length})` : '所有廠牌';
+            document.getElementById('label-location').innerText = filters.locations.length ? `位置 (${filters.locations.length})` : '所有位置';
+            document.getElementById('label-sale').innerText = filters.sales.length ? `形式 (${filters.sales.length})` : '所有形式';
+
+            render();
+        }
+
+        function populateFilters() {
+            const brands = [...new Set(cars.map(c => c["廠牌"]).filter(b => b && b !== ""))];
+            const brandDrop = document.getElementById('dropdown-brand');
+            brandDrop.innerHTML = '';
+            brands.forEach(b => {
+                const count = cars.filter(c => c["編碼"] !== "CONFIG_LOGO" && c["編碼"] !== "CONFIG_BULLETIN" && c["編碼"] !== "CONFIG_PASSWORD" && c["廠牌"] === b && c["販售狀態"] !== "售出").length;
+                if (count > 0) {
+                    brandDrop.innerHTML += `
+                        <label class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded cursor-pointer text-xs">
+                            <input type="checkbox" value="${escapeHtml(b)}" onchange="updateFilters()" class="accent-emerald-500 w-3.5 h-3.5">
+                            <span class="text-slate-700 font-bold">${escapeHtml(b)} <span class="text-slate-400 font-normal">(${count})</span></span>
+                        </label>
+                    `;
+                }
+            });
+
+            const locs = [...new Set(cars.map(c => c["在庫位子"]).filter(l => l && l !== ""))];
+            const locDrop = document.getElementById('dropdown-location');
+            locDrop.innerHTML = '';
+            locs.forEach(l => { 
+                const count = cars.filter(c => c["編碼"] !== "CONFIG_LOGO" && c["編碼"] !== "CONFIG_BULLETIN" && c["編碼"] !== "CONFIG_PASSWORD" && c["在庫位子"] === l && c["販售狀態"] !== "售出").length;
+                locDrop.innerHTML += `
+                    <label class="flex items-center gap-2 p-1.5 hover:bg-slate-50 rounded cursor-pointer text-xs">
+                        <input type="checkbox" value="${escapeHtml(l)}" onchange="updateFilters()" class="accent-emerald-500 w-3.5 h-3.5">
+                        <span class="text-slate-700 font-bold">${escapeHtml(l)} <span class="text-slate-400 font-normal">(${count})</span></span>
+                    </label>
+                `;
+            });
+        }
+
+        function clearFilters() {
+            document.querySelectorAll('.custom-dropdown-content input[type="checkbox"]').forEach(cb => cb.checked = false);
+            document.getElementById('search-bar').value = "";
+            updateFilters();
+        }
+
+        function render() {
+            const gallery = document.getElementById('gallery');
+            const sortBy = document.getElementById('sort-by').value; 
+            const searchKeyword = document.getElementById('search-bar').value.trim().toLowerCase();
+            gallery.innerHTML = "";
+
+            const sc = scaleConfig[currentScale] || scaleConfig.normal;
+
+            const filtered = cars.filter(c => {
+                if (c["編碼"] === "CONFIG_LOGO" || c["編碼"] === "CONFIG_BULLETIN" || c["編碼"] === "CONFIG_PASSWORD") return false;
+                
+                const matchBrand = filters.brands.length === 0 || filters.brands.includes(c["廠牌"]);
+                const matchLoc = filters.locations.length === 0 || filters.locations.includes(c["在庫位子"]);
+                const matchSale = filters.sales.length === 0 || filters.sales.includes(c["售買形式"]);
+                
+                const carText = `${c["廠牌"]} ${c["型號"]} ${c["年份"]} ${c["在庫位子"]} ${c["車身碼"] || ''} ${c["顏色"] || ''} ${c["排氣量"] || ''} ${c["備註"] || ''}`.toLowerCase();
+                const matchSearch = !searchKeyword || carText.includes(searchKeyword);
+
+                return matchBrand && matchLoc && matchSale && matchSearch;
+            });
+
+            let filterStatusHtml = '';
+            if (filters.brands.length > 0 || filters.locations.length > 0 || filters.sales.length > 0 || searchKeyword) {
+                let filterTexts = [];
+                if (filters.brands.length > 0) filterTexts.push(`廠牌: ${filters.brands.join(', ')}`);
+                if (filters.locations.length > 0) filterTexts.push(`位置: ${filters.locations.join(', ')}`);
+                if (filters.sales.length > 0) filterTexts.push(`形式: ${filters.sales.join(', ')}`);
+                if (searchKeyword) filterTexts.push(`關鍵字: "${searchKeyword}"`);
+                
+                filterStatusHtml = `
+                    <div class="bg-emerald-50 border border-emerald-150 rounded-2xl px-4 py-3.5 text-xs font-bold text-slate-700 flex flex-col sm:flex-row gap-2 justify-between items-start sm:items-center shadow-sm mb-4">
+                        <div class="flex flex-wrap items-center gap-1.5">
+                            <span class="bg-emerald-600 text-white text-[10px] font-black px-2 py-0.5 rounded-lg">當前篩選</span>
+                            <span>${escapeHtml(filterTexts.join(' ｜ '))}</span>
+                        </div>
+                        <button onclick="clearFilters()" class="text-emerald-600 hover:text-emerald-700 transition-colors flex items-center gap-1 text-[11px] self-end sm:self-auto font-black">
+                            <i class="fa-solid fa-rotate-left"></i> 重設清除篩選
+                        </button>
+                    </div>
+                `;
+            }
+
+            if (filtered.length === 0) {
+                gallery.innerHTML = filterStatusHtml + `
+                    <div class="text-center py-16 bg-white rounded-3xl border border-slate-200 relative z-10">
+                        <i class="fa-solid fa-car-on text-slate-300 text-5xl mb-4"></i>
+                        <p class="text-slate-500 font-bold">目前無符合條件之在庫車款</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // 排序邏輯
+            filtered.sort((a, b) => {
+                const aSold = a["販售狀態"] === "售出" ? 1 : 0;
+                const bSold = b["販售狀態"] === "售出" ? 1 : 0;
+                if (aSold !== bSold) return aSold - bSold; 
+                
+                if (sortBy === "price-desc") {
+                    const priceA = getCarEffectivePrice(a);
+                    const priceB = getCarEffectivePrice(b);
+                    return priceB - priceA;
+                } else if (sortBy === "price-asc") {
+                    const priceA = getCarEffectivePrice(a);
+                    const priceB = getCarEffectivePrice(b);
+                    return priceA - priceB;
+                } else if (sortBy === "date-asc") {
+                    const dateA = parseDate(a["購入日期"]);
+                    const dateB = parseDate(b["購入日期"]);
+                    const valA = dateA ? dateA.getTime() : 0; 
+                    const valB = dateB ? dateB.getTime() : 0;
+                    if (valA !== valB) return valA - valB;
+                    return String(a["編碼"]).localeCompare(String(b["編碼"]));
+                } else {
+                    const dateA = parseDate(a["購入日期"]);
+                    const dateB = parseDate(b["購入日期"]);
+                    const valA = dateA ? dateA.getTime() : 0; 
+                    const valB = dateB ? dateB.getTime() : 0;
+                    if (valA !== valB) return valB - valA;
+                    return String(b["編碼"]).localeCompare(String(a["編碼"]));
+                }
+            });
+
+            if (isListView === 'list') {
+                const container = document.createElement('div');
+                if (filterStatusHtml) {
+                    const filterDiv = document.createElement('div');
+                    filterDiv.innerHTML = filterStatusHtml;
+                    container.appendChild(filterDiv);
+                }
+
+                const tableWrap = document.createElement('div');
+                tableWrap.className = "overflow-x-auto bg-white/90 rounded-2xl border border-slate-200 shadow-sm relative z-10 backdrop-blur-sm";
+
+                const table = document.createElement('table');
+                table.className = `w-full text-left border-collapse md:min-w-[850px] ${currentScale === 'compact' ? 'text-xs' : 'text-sm'}`;
+                
+                table.innerHTML = `
+                    <thead>
+                        <tr class="bg-slate-50/80 border-b border-slate-200 font-black text-slate-400 uppercase tracking-wider">
+                            <th class="${sc.thPadding}">廠牌</th>
+                            <th class="${sc.thPadding}">車型</th>
+                            <th class="${sc.thPadding} hidden md:table-cell">年份</th>
+                            <th class="${sc.thPadding} hidden md:table-cell">顏色</th>
+                            <th class="${sc.thPadding} hidden md:table-cell">里程</th>
+                            <th class="${sc.thPadding} hidden md:table-cell">位子</th>
+                            <th class="${sc.thPadding} hidden md:table-cell">販售狀態</th>
+                            <th class="${sc.thPadding} text-right">網路價格</th>
+                        </tr>
+                    </thead>
+                `;
+
+                const tbody = document.createElement('tbody');
+                tbody.className = "divide-y divide-slate-100";
+
+                filtered.forEach((car) => {
+                    const isSold = car["販售狀態"] === "售出";
+                    const isReserved = car["販售狀態"] === "收訂" || car["販售狀態"] === "預訂";
+                    const locBadgeClass = getLocationColor(car["在庫位子"]);
+                    const badgeColorClass = getStatusBadgeClass(car["販售狀態"]);
+
+                    const origPriceNum = parseFloat(String(car["開價"] || '').replace(/[^0-9.]/g, ''));
+                    const newPriceNum = parseFloat(String(car["新價格"] || '').replace(/[^0-9.]/g, ''));
+                    const displayPrice = (!isNaN(newPriceNum) && newPriceNum > 0 && !isNaN(origPriceNum) && newPriceNum < origPriceNum) 
+                        ? car["新價格"] 
+                        : (car["開價"] || '--');
+
+                    const tr = document.createElement('tr');
+                    tr.className = `hover:bg-slate-50/80 cursor-pointer transition-colors ${isSold ? 'opacity-65' : ''} ${isReserved ? 'bg-amber-50/10' : ''}`;
+                    tr.onclick = () => openModal(car);
+
+                    tr.innerHTML = `
+                        <td class="${sc.tdPadding} font-bold text-slate-500 uppercase">${escapeHtml(car["廠牌"] || '--')}</td>
+                        <td class="${sc.tdPadding}">
+                            <div class="font-black ${isSold ? 'text-slate-400 line-through' : 'text-slate-900'}">${escapeHtml(car["型號"] || '--')}</div>
+                            <div class="flex flex-wrap items-center gap-1.5 mt-1 md:hidden text-[10px]">
+                                <span class="text-slate-500 font-bold bg-slate-100 px-1 py-0.5 rounded">${escapeHtml(car["年份"])} 年</span>
+                                <span class="text-slate-500 font-bold bg-slate-100 px-1 py-0.5 rounded">${formatMileage(car["里程"])}</span>
+                                <span class="border px-1 py-0.5 rounded font-bold ${locBadgeClass}">${escapeHtml(car["在庫位子"] || "展間")}</span>
+                            </div>
+                        </td>
+                        <td class="${sc.tdPadding} text-slate-600 font-bold hidden md:table-cell">${escapeHtml(car["年份"] || '--')}</td>
+                        <td class="${sc.tdPadding} text-slate-600 font-bold hidden md:table-cell">${escapeHtml(car["顏色"] || '--')}</td>
+                        <td class="${sc.tdPadding} text-slate-600 font-bold hidden md:table-cell">${formatMileage(car["里程"])}</td>
+                        <td class="${sc.tdPadding} hidden md:table-cell">
+                            <span class="px-2 py-1 rounded-lg border text-[11px] font-bold ${locBadgeClass}">
+                                ${escapeHtml(car["在庫位子"] || "展間")}
+                            </span>
+                        </td>
+                        <td class="${sc.tdPadding} hidden md:table-cell">
+                            <span class="px-2 py-0.5 rounded text-[10px] font-black ${badgeColorClass} text-white shadow-sm">
+                                ${escapeHtml(car["販售狀態"] || '在庫')}
+                            </span>
+                        </td>
+                        <td class="${sc.tdPadding} text-right">
+                            <div class="flex items-end justify-end gap-0.5">
+                                <span class="font-black font-mono tracking-tighter ${isSold ? 'text-slate-400 line-through' : 'text-rose-600 text-lg md:text-xl lg:text-2xl'} italic">${escapeHtml(displayPrice)}</span>
+                                <span class="text-[10px] md:text-xs font-black ${isSold ? 'text-slate-400' : 'text-rose-600'} mb-0.5">萬</span>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                table.appendChild(tbody);
+                tableWrap.appendChild(table);
+                container.appendChild(tableWrap);
+                gallery.appendChild(container);
+                return;
+            }
+
+            if (isListView === 'brick') {
+                const container = document.createElement('div');
+                if (filterStatusHtml) {
+                    const filterDiv = document.createElement('div');
+                    filterDiv.innerHTML = filterStatusHtml;
+                    container.appendChild(filterDiv);
+                }
+
+                const grid = document.createElement('div');
+                grid.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3.5 relative z-10";
+
+                filtered.forEach((car, index) => {
+                    const isSold = car["販售狀態"] === "售出";
+                    const isReserved = car["販售狀態"] === "收訂" || car["販售狀態"] === "預訂";
+                    const resolvedImageUrl = getDirectImageUrl(car["封面圖片"]);
+                    const locBadgeClass = getLocationColor(car["在庫位子"]);
+                    const badgeColorClass = getStatusBadgeClass(car["販售狀態"]);
+
+                    const origPriceNum = parseFloat(String(car["開價"] || '').replace(/[^0-9.]/g, ''));
+                    const newPriceNum = parseFloat(String(car["新價格"] || '').replace(/[^0-9.]/g, ''));
+                    const displayPrice = (!isNaN(newPriceNum) && newPriceNum > 0 && !isNaN(origPriceNum) && newPriceNum < origPriceNum) 
+                        ? car["新價格"] 
+                        : (car["開價"] || '--');
+
+                    const brick = document.createElement('div');
+                    brick.className = `car-brick-item bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm hover:border-emerald-500 hover:shadow-md transition-all cursor-pointer flex flex-col relative ${isSold ? 'opacity-65' : ''} ${isReserved ? 'border-amber-500 ring-2 ring-amber-500/20' : ''}`;
+                    brick.onclick = () => openModal(car);
+
+                    brick.innerHTML = `
+                        <div class="aspect-[4/3] bg-slate-100 relative overflow-hidden flex-shrink-0">
+                            <img src="${resolvedImageUrl}" referrerpolicy="no-referrer" onerror="handleImageError(this, ${index})" class="w-full h-full object-cover">
+                            
+                            <div class="bookmark-ribbon ${badgeColorClass} scale-90 origin-top">
+                                ${escapeHtml(car["販售狀態"] || '在庫')}
+                            </div>
+
+                            ${isSold ? `
+                                <div class="sold-stamp !text-xs !p-1 !border-2">
+                                    已售出
+                                </div>` : ''
+                            }
+                        </div>
+
+                        <div class="p-3 flex flex-col justify-between flex-grow">
+                            <div>
+                                <div class="text-[9px] font-black text-slate-400 uppercase tracking-wider">${escapeHtml(car["廠牌"] || '--')}</div>
+                                <h3 class="font-black text-xs md:text-sm text-slate-900 truncate mb-1.5">${escapeHtml(car["型號"] || '--')}</h3>
+                                <div class="flex flex-wrap gap-1 text-[9px] font-bold text-slate-500 mb-2">
+                                    <span class="bg-slate-100 px-1 py-0.5 rounded">${escapeHtml(car["年份"])} 年</span>
+                                    <span class="bg-slate-100 px-1 py-0.5 rounded">${formatMileage(car["里程"])}</span>
+                                </div>
+                            </div>
+                            <div class="pt-2 border-t border-slate-100 flex justify-between items-end">
+                                <span class="text-[9px] font-bold border px-1 py-0.5 rounded ${locBadgeClass} truncate max-w-[70px]">${escapeHtml(car["在庫位子"] || "展間")}</span>
+                                <span class="font-black text-rose-600 font-mono text-sm">${escapeHtml(displayPrice)}<span class="text-[9px] ml-0.5">萬</span></span>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(brick);
+                });
+
+                container.appendChild(grid);
+                gallery.appendChild(container);
+                return;
+            }
+
+            // 預設: 圖文卡片模式 (Card Mode)
+            const container = document.createElement('div');
+            if (filterStatusHtml) {
+                const filterDiv = document.createElement('div');
+                filterDiv.innerHTML = filterStatusHtml;
+                container.appendChild(filterDiv);
+            }
+
+            const cardsWrap = document.createElement('div');
+            cardsWrap.className = "space-y-4 relative z-10";
+
+            filtered.forEach((car, index) => {
+                const isSold = car["販售狀態"] === "售出";
+                const isReserved = car["販售狀態"] === "收訂" || car["販售狀態"] === "預訂";
+                const resolvedImageUrl = getDirectImageUrl(car["封面圖片"]);
+                const locBadgeClass = getLocationColor(car["在庫位子"]);
+                const badgeColorClass = getStatusBadgeClass(car["販售狀態"]);
+                const saleBadgeClass = getSaleTypeColor(car["售買形式"]);
+
+                const origPriceNum = parseFloat(String(car["開價"] || '').replace(/[^0-9.]/g, ''));
+                const newPriceNum = parseFloat(String(car["新價格"] || '').replace(/[^0-9.]/g, ''));
+                const hasDiscount = !isNaN(newPriceNum) && newPriceNum > 0 && !isNaN(origPriceNum) && newPriceNum < origPriceNum;
+
+                let priceDisplayHtml = '';
+                if (hasDiscount) {
+                    priceDisplayHtml = `
+                        <div class="text-right">
+                            <div class="text-[10px] text-slate-400 line-through font-mono font-bold">${car["開價"]} 萬</div>
+                            <div class="flex items-end justify-end gap-0.5">
+                                <span class="${sc.priceText} font-black text-rose-600 font-mono tracking-tighter italic">${car["新價格"]}</span>
+                                <span class="text-xs font-black text-rose-600 mb-1">萬</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    priceDisplayHtml = `
+                        <div class="flex items-end justify-end gap-0.5">
+                            <span class="${sc.priceText} font-black ${isSold ? 'text-slate-400 line-through' : 'text-rose-600'} font-mono tracking-tighter">${car["開價"] || '--'}</span>
+                            <span class="text-xs font-black ${isSold ? 'text-slate-400' : 'text-rose-600'} mb-1">萬</span>
+                        </div>
+                    `;
+                }
+
+                const row = document.createElement('div');
+                row.className = `car-row ${isSold ? 'is-sold' : ''} ${isReserved ? 'is-reserved-card' : ''}`;
+                row.onclick = () => openModal(car);
+
+                row.innerHTML = `
+                    ${isReserved ? `
+                        <div class="absolute top-0 inset-x-0 bg-gradient-to-r from-amber-500 via-rose-500 to-amber-500 text-white text-[9px] md:text-[11px] font-black py-0.5 md:py-1 px-4 text-center tracking-wider z-20 flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-circle-exclamation animate-pulse"></i>
+                            <span class="truncate">本車已保留！請勿重複銷售</span>
+                        </div>
+                    ` : ''}
+
+                    ${isSold ? `
+                        <div class="sold-stamp" style="pointer-events: none;">
+                            已售出
+                            <span class="text-[9px] md:text-[11px] font-black block mt-0.5 md:mt-1 tracking-widest text-red-600 bg-white/95 px-1.5 py-0.5 rounded border border-red-200">
+                                ${getOnlyDate(car["成交日期"])}
+                            </span>
+                        </div>` : ''
+                    }
+                    
+                    <div class="img-box ${sc.imgWidth} ${sc.imgHeight} bg-slate-100 flex-shrink-0 relative overflow-hidden flex items-center justify-center">
+                        <img src="${resolvedImageUrl}" 
+                             referrerpolicy="no-referrer"
+                             onerror="handleImageError(this, ${index})" 
+                             class="w-full h-full object-cover transition-transform duration-500 hover:scale-105" 
+                             alt="${escapeHtml(car["型號"])}">
+                        
+                        <div class="bookmark-ribbon ${badgeColorClass}">
+                            ${escapeHtml(car["販售狀態"] || '在庫')}
+                        </div>
+                    </div>
+
+                    <div class="flex-grow ${sc.contentPadding} flex flex-col justify-between bg-white min-w-0">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="border px-1.5 py-0.5 rounded text-[8px] md:text-[10px] font-black tracking-wider uppercase ${saleBadgeClass}">${escapeHtml(car["售買形式"] || '零售')}</span>
+                            </div>
+                            
+                            <div class="flex items-center flex-wrap gap-1.5 md:gap-2.5 mb-2 md:mb-3">
+                                <span class="bg-slate-900 text-white ${sc.brandText} rounded uppercase tracking-wider flex-shrink-0 scale-90 md:scale-100 origin-left font-black">${escapeHtml(car["廠牌"] || '--')}</span>
+                                <h3 class="${sc.titleText} font-black text-slate-950 tracking-tight hover:text-emerald-600 transition-colors truncate min-w-0">${escapeHtml(car["型號"] || '--')}</h3>
+                            </div>
+
+                            <div class="flex flex-wrap ${sc.tagGap}">
+                                <span class="bg-slate-50 border border-slate-100 text-slate-600 ${sc.tagPadding} font-bold scale-95 md:scale-100 origin-left">${escapeHtml(car["年份"])} 年份</span>
+                                <span class="bg-slate-50 border border-slate-100 text-slate-600 ${sc.tagPadding} font-bold scale-95 md:scale-100 origin-left">${formatMileage(car["里程"])}</span>
+                                <span class="border ${sc.tagPadding} font-bold flex items-center gap-0.5 ${locBadgeClass} scale-95 md:scale-100 origin-left truncate max-w-[120px] md:max-w-none">
+                                    <i class="fa-solid fa-location-dot text-[8px] md:text-[10px]"></i> ${escapeHtml(car["在庫位子"] || "展間")}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="price-box w-auto md:w-${sc.priceWidth} border-l-0 md:border-l border-slate-100 ${sc.pricePadding} flex flex-col justify-center items-end bg-transparent md:bg-slate-50/50 pr-4">
+                        ${priceDisplayHtml}
+                    </div>
+                `;
+                cardsWrap.appendChild(row);
+            });
+
+            container.appendChild(cardsWrap);
+            gallery.appendChild(container);
+        }
+
+        function openModalByCode(code) {
+            const car = cars.find(c => c["編碼"] === code);
+            if (car) openModal(car);
+        }
+
+        function openModal(car) {
+            currentSelectedCar = car; 
+
+            const modal = document.getElementById('detail-modal');
+            const modalCard = document.getElementById('modal-card');
+            
+            const defaultCoverImg = getDirectImageUrl(car["封面圖片"]);
+            document.getElementById('modal-img').src = defaultCoverImg;
+            document.getElementById('modal-img').onerror = function() {
+                this.src = placeholderImages[0];
+            };
+            
+            document.getElementById('modal-brand-badge').innerText = car["廠牌"] || '--';
+            document.getElementById('modal-title').innerText = car["型號"] || '--';
+            document.getElementById('modal-badge-year').innerText = `${car["年份"]} 年`;
+            
+            const modalBadgeSale = document.getElementById('modal-badge-sale');
+            modalBadgeSale.innerText = car["售買形式"] || '零售';
+            modalBadgeSale.className = `border px-2.5 py-1 rounded-md text-xs font-bold ${getSaleTypeColor(car["售買形式"])}`;
+
+            document.getElementById('modal-remarks').innerText = car["備註"] || "目前暫無詳細車況描述。";
+
+            document.getElementById('spec-brand').innerText = car["廠牌"] || '--';
+            document.getElementById('spec-model').innerText = car["型號"] || '--';
+            document.getElementById('spec-plate').innerText = car["車號"] || '未載錄/未領牌';
+            document.getElementById('spec-year').innerText = car["年份"] ? `${car["年份"]} 年` : '--';
+            document.getElementById('spec-vin').innerText = car["車身碼"] || '現場核對 / 無提供';
+            document.getElementById('spec-displacement').innerText = car["排氣量"] || '--';
+            document.getElementById('spec-color').innerText = car["顏色"] || '--';
+            document.getElementById('spec-mileage').innerText = formatMileage(car["里程"]);
+            
+            const origP = parseFloat(String(car["開價"] || '').replace(/[^0-9.]/g, ''));
+            const newP = parseFloat(String(car["新價格"] || '').replace(/[^0-9.]/g, ''));
+            if (!isNaN(newP) && newP > 0 && !isNaN(origP) && newP < origP) {
+                document.getElementById('spec-price-retail').innerText = `${car["新價格"]} (原價${car["開價"]})`;
+            } else {
+                document.getElementById('spec-price-retail').innerText = car["開價"] ? `${car["開價"]}` : '--';
+            }
+
+            document.getElementById('spec-fuel').innerText = car["燃料形式"] || '--';
+            document.getElementById('spec-location').innerText = car["在庫位子"] || '現場展間';
+            document.getElementById('spec-sale').innerText = car["售買形式"] || '--';
+            document.getElementById('spec-status').innerText = car["販售狀態"] || '--';
+            
+            const locEl = document.getElementById('spec-location');
+            const locBadgeClass = getLocationColor(car["在庫位子"]);
+            locEl.className = `text-sm font-black px-2.5 py-1 rounded-lg border inline-block ${locBadgeClass}`;
+
+            const buyDateStr = car["購入日期"] ? getOnlyDate(car["購入日期"]) : '--';
+            document.getElementById('spec-buy-date').innerText = buyDateStr;
+
+            const specInspectEl = document.getElementById('spec-inspection');
+            const inspectStatus = getInspectionStatus(car);
+            
+            if (inspectStatus) {
+                const freqText = inspectStatus.freq === "1" ? "一年一驗" : "一年兩驗";
+                const monthsLabel = car["驗車月份"] ? ` (${car["驗車月份"]}月)` : '';
+                
+                let statusBadgeStr = "";
+                if (inspectStatus.type === "due") {
+                    statusBadgeStr = `<span class="block text-[11px] font-black text-amber-600 animate-pulse mt-1"><i class="fa-solid fa-bell mr-1"></i>本月需驗車</span>`;
+                } else if (inspectStatus.type === "overdue") {
+                    statusBadgeStr = `<span class="block text-[11px] font-black text-rose-600 animate-pulse mt-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i>驗車過期警告</span>`;
+                } else if (inspectStatus.type === "remind") {
+                    statusBadgeStr = `<span class="block text-[11px] font-black text-blue-600 mt-1"><i class="fa-solid fa-info-circle mr-1"></i>提醒驗車 (下月)</span>`;
+                }
+                
+                specInspectEl.innerHTML = `<div>${freqText}${monthsLabel}</div>${statusBadgeStr}`;
+            } else {
+                specInspectEl.className = "text-sm font-black text-slate-400";
+                specInspectEl.innerText = '免驗車 / 暫無數據';
+            }
+
+            const daysEl = document.getElementById('spec-stock-days');
+            const buyDateObj = parseDate(car["購入日期"]);
+            
+            if (buyDateObj) {
+                if (car["販售狀態"] === "售出") {
+                    const sellDateObj = parseDate(car["成交日期"]);
+                    if (sellDateObj && sellDateObj >= buyDateObj) {
+                        const salesDays = calculateDaysBetween(buyDateObj, sellDateObj);
+                        daysEl.className = "text-sm font-black text-rose-500";
+                        daysEl.innerText = `${salesDays} 天快速成交！`;
+                    } else {
+                        daysEl.className = "text-sm font-black text-slate-500";
+                        daysEl.innerText = "已順利成交";
+                    }
+                } else {
+                    if (currentSystemDate >= buyDateObj) {
+                        const stockDays = calculateDaysBetween(buyDateObj, currentSystemDate);
+                        if (stockDays > 30) {
+                            daysEl.className = "text-sm font-black text-amber-600 animate-pulse";
+                            daysEl.innerText = `警戒：在庫已 ${stockDays} 天`;
+                        } else {
+                            daysEl.className = "text-sm font-black text-emerald-600";
+                            daysEl.innerText = `在庫 ${stockDays} 天`;
+                        }
+                    } else {
+                        daysEl.className = "text-sm font-black text-slate-500";
+                        daysEl.innerText = "剛入庫";
+                    }
+                }
+            } else {
+                daysEl.className = "text-sm font-black text-slate-400";
+                daysEl.innerText = "暫無採購數據";
+            }
+
+            const certBadge = document.getElementById('modal-cert-badge');
+            const specCert = document.getElementById('spec-cert');
+            const uncertifiedWarningBar = document.getElementById('modal-uncertified-warning-bar');
+
+            if (car["是否認證"] === "是") {
+                certBadge.classList.remove('hidden');
+                uncertifiedWarningBar.classList.add('hidden');
+                specCert.className = "text-sm font-black text-emerald-600";
+                specCert.innerHTML = `<i class="fa-solid fa-shield-halved mr-1.5"></i>第三方認證車`;
+            } else {
+                certBadge.classList.add('hidden');
+                uncertifiedWarningBar.classList.remove('hidden'); 
+                specCert.className = "text-sm font-black text-rose-500 animate-pulse";
+                specCert.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-1.5"></i>未認證`;
+            }
+
+            const warningBar = document.getElementById('modal-warning-bar');
+            const isReserved = car["販售狀態"] === "收訂" || car["販售狀態"] === "預訂";
+            if (isReserved) {
+                warningBar.classList.remove('hidden');
+            } else {
+                warningBar.classList.add('hidden');
+            }
+
+            const modalSoldStamp = document.getElementById('modal-sold-stamp');
+            const modalSoldTime = document.getElementById('modal-sold-time');
+            if (car["販售狀態"] === "售出") {
+                modalSoldStamp.classList.remove('hidden');
+                modalSoldTime.innerText = getOnlyDate(car["成交日期"]);
+            } else {
+                modalSoldStamp.classList.add('hidden');
+            }
+
+            const statusBadge = document.getElementById('modal-status-badge');
+            const badgeColorClass = getStatusBadgeClass(car["販售狀態"]);
+            statusBadge.className = `absolute bottom-4 right-4 px-3 py-1.5 rounded-lg text-xs font-black shadow-xl ${badgeColorClass} text-white`;
+            statusBadge.innerText = car["販售狀態"] || '在庫';
+
+            const thumbsContainer = document.getElementById('modal-thumbnails-container');
+            const thumbsDiv = document.getElementById('modal-thumbnails');
+            thumbsDiv.innerHTML = '';
+            
+            const otherPhotos = parseOtherPhotos(car["其他照片"] || car["other照片"]);
+            const allPhotos = [];
+            if (car["封面圖片"]) allPhotos.push(getDirectImageUrl(car["封面圖片"]));
+            otherPhotos.forEach(p => {
+                allPhotos.push(p);
+            });
+
+            document.getElementById('modal-img').setAttribute('referrerpolicy', 'no-referrer');
+            document.getElementById('modal-img').onclick = () => {
+                const currentImgSrc = document.getElementById('modal-img').src;
+                const idx = allPhotos.indexOf(currentImgSrc);
+                openLightbox(idx !== -1 ? idx : 0, allPhotos);
+            };
+
+            if (allPhotos.length > 1) {
+                thumbsContainer.classList.remove('hidden');
+                allPhotos.forEach((photoUrl, pIdx) => {
+                    const thumb = document.createElement('div');
+                    thumb.className = `w-20 h-14 rounded-lg overflow-hidden border-2 cursor-pointer flex-shrink-0 transition-all ${pIdx === 0 ? 'border-emerald-500' : 'border-transparent hover:border-slate-300'}`;
+                    thumb.innerHTML = `<img src="${photoUrl}" referrerpolicy="no-referrer" class="w-full h-full object-cover" onerror="this.src='${placeholderImages[pIdx % placeholderImages.length]}'">`;
+                    
+                    thumb.onclick = () => {
+                        document.getElementById('modal-img').src = photoUrl;
+                        Array.from(thumbsDiv.children).forEach(child => child.className = child.className.replace('border-emerald-500', 'border-transparent'));
+                        thumb.className = thumb.className.replace('border-transparent', 'border-emerald-500');
+                    };
+                    thumbsDiv.appendChild(thumb);
+                });
+            } else {
+                thumbsContainer.classList.add('hidden');
+            }
+
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.add('opacity-100');
+                modalCard.classList.remove('scale-95', 'opacity-0');
+                modalCard.classList.add('scale-100', 'opacity-100');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function openPrintModal() {
+            const printModal = document.getElementById('print-modal');
+            const modalCard = document.getElementById('print-modal-card');
+            
+            const brands = [...new Set(cars.map(c => c["廠牌"]).filter(b => b && b !== ""))];
+            const brandContainer = document.getElementById('print-filter-brands');
+            brandContainer.innerHTML = '';
+            brands.forEach(b => {
+                brandContainer.innerHTML += `
+                    <label class="flex items-center gap-1.5 p-1.5 hover:bg-white rounded cursor-pointer text-xs">
+                        <input type="checkbox" value="${escapeHtml(b)}" checked class="accent-emerald-600 w-3.5 h-3.5">
+                        <span class="truncate font-bold text-slate-700">${escapeHtml(b)}</span>
+                    </label>
+                `;
+            });
+
+            const locs = [...new Set(cars.map(c => c["在庫位子"]).filter(l => l && l !== ""))];
+            const locContainer = document.getElementById('print-filter-locations');
+            locContainer.innerHTML = '';
+            locs.forEach(l => {
+                locContainer.innerHTML += `
+                    <label class="flex items-center gap-1.5 p-1.5 hover:bg-white rounded cursor-pointer text-xs">
+                        <input type="checkbox" value="${escapeHtml(l)}" checked class="accent-emerald-600 w-3.5 h-3.5">
+                        <span class="truncate font-bold text-slate-700">${escapeHtml(l)}</span>
+                    </label>
+                `;
+            });
+
+            printModal.classList.remove('hidden');
+            setTimeout(() => {
+                printModal.classList.add('opacity-100');
+                modalCard.classList.remove('scale-95', 'opacity-0');
+                modalCard.classList.add('scale-100', 'opacity-100');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePrintModal() {
+            const printModal = document.getElementById('print-modal');
+            const modalCard = document.getElementById('print-modal-card');
+            modalCard.classList.remove('scale-100', 'opacity-100');
+            modalCard.classList.add('scale-95', 'opacity-0');
+            printModal.classList.remove('opacity-100');
+            
+            setTimeout(() => {
+                printModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }, 300);
+        }
+
+        function toggleSelectAll(containerId) {
+            const checkboxes = document.querySelectorAll(`#${containerId} input[type="checkbox"]`);
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            checkboxes.forEach(cb => cb.checked = !allChecked);
+        }
+
+        function executePrint() {
+            const selectedStatuses = Array.from(document.querySelectorAll('#print-filter-status input:checked')).map(cb => cb.value);
+            const selectedSales = Array.from(document.querySelectorAll('#print-filter-sale input:checked')).map(cb => cb.value);
+            const selectedBrands = Array.from(document.querySelectorAll('#print-filter-brands input:checked')).map(cb => cb.value);
+            const selectedLocs = Array.from(document.querySelectorAll('#print-filter-locations input:checked')).map(cb => cb.value);
+
+            const printCars = cars.filter(c => {
+                if (c["編碼"] === "CONFIG_LOGO" || c["編碼"] === "CONFIG_BULLETIN" || c["編碼"] === "CONFIG_PASSWORD") return false;
+
+                const status = String(c["販售狀態"] || "在庫").trim();
+                let matchStatus = false;
+                if (selectedStatuses.includes(status)) {
+                    matchStatus = true;
+                } else if (selectedStatuses.includes("收訂") && (status === "預訂" || status === "收訂")) {
+                    matchStatus = true;
+                }
+
+                const matchSale = selectedSales.length === 0 || selectedSales.includes(c["售買形式"] || "零售");
+                const matchBrand = selectedBrands.length === 0 || selectedBrands.includes(c["廠牌"]);
+                const matchLoc = selectedLocs.length === 0 || selectedLocs.includes(c["在庫位子"]);
+
+                return matchStatus && matchSale && matchBrand && matchLoc;
+            });
+
+            if (printCars.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '無符合車輛',
+                    text: '依照您所設定的條件，查無任何車輛可供列印。',
+                    confirmButtonColor: '#10b981'
+                });
+                return;
+            }
+
+            const printContainer = document.getElementById('print-output-container');
+            const today = currentSystemDate;
+            const monthStr = String(today.getMonth()+1).padStart(2,'0');
+            const todayStr = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
+
+            let html = `
+                <div class="p-1">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #0f172a; padding-bottom: 5px; margin-bottom: 6px;">
+                        <div>
+                            <h1 style="font-size: 26px; font-weight: 900; margin: 0; color: #0f172a;">${monthStr}月 在庫車輛總表</h1>
+                            <p style="font-size: 8px; color: #64748b; margin: 1px 0 0 0;">列印基準: ${todayStr} ｜ 車輛數: ${printCars.length} 台</p>
+                        </div>
+                        <div style="font-size: 9px; font-weight: 900; color: #059669; border: 1px solid #059669; padding: 1.5px 6px; border-radius: 4px;">
+                            內部業務專用
+                        </div>
+                    </div>
+
+                    <div class="print-grid">
+            `;
+
+            printCars.forEach((car, index) => {
+                const resolvedImageUrl = getDirectImageUrl(car["封面圖片"]);
+                const origPriceNum = parseFloat(String(car["開價"] || '').replace(/[^0-9.]/g, ''));
+                const newPriceNum = parseFloat(String(car["新價格"] || '').replace(/[^0-9.]/g, ''));
+                const displayPrice = (!isNaN(newPriceNum) && newPriceNum > 0 && !isNaN(origPriceNum) && newPriceNum < origPriceNum) 
+                    ? car["新價格"] 
+                    : (car["開價"] || '--');
+
+                const isSold = car["販售狀態"] === "售出";
+                const isReserved = car["販售狀態"] === "收訂" || car["販售狀態"] === "預訂";
+
+                html += `
+                    <div class="print-brick-card" style="page-break-inside: avoid; break-inside: avoid; border: 1px solid #cbd5e1; border-radius: 5px; overflow: hidden; background: #ffffff; position: relative;">
+                        <div style="position: relative; width: 100%; aspect-ratio: 4/3; background: #f1f5f9; overflow: hidden;">
+                            <img src="${resolvedImageUrl}" referrerpolicy="no-referrer" style="width: 100%; height: 100%; object-fit: cover; ${isSold ? 'filter: grayscale(85%); opacity: 0.65;' : ''}" onerror="this.src='${placeholderImages[index % placeholderImages.length]}'">
+                            
+                            <div style="position: absolute; top: 0; left: 4px; background: ${isSold ? '#64748b' : (isReserved ? '#f43f5e' : '#10b981')}; color: white; font-size: 6.5px; font-weight: 900; padding: 1.5px 4px; border-radius: 0 0 3px 3px; z-index: 5;">
+                                ${escapeHtml(car["販售狀態"] || '在庫')}
+                            </div>
+
+                            ${isSold ? `
+                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(-12deg); border: 2.5px double #dc2626; color: #dc2626; background: rgba(255, 255, 255, 0.96); padding: 2px 7px; font-size: 11px; font-weight: 900; z-index: 15; border-radius: 4px; letter-spacing: 1.5px; box-shadow: 0 2px 5px rgba(220,38,38,0.2); text-align: center; line-height: 1.1; white-space: nowrap;">
+                                    已售出
+                                    ${car["成交日期"] ? `<span style="display:block; font-size: 6px; font-weight: 800; color: #ef4444; letter-spacing: 0;">${getOnlyDate(car["成交日期"])}</span>` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+
+                        <div style="padding: 4px; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1;">
+                            <div style="margin-bottom: 3px;">
+                                <div style="font-size: 6.5px; font-weight: 900; color: #64748b; text-transform: uppercase;">${escapeHtml(car["廠牌"] || '--')}</div>
+                                <div style="font-size: 9px; font-weight: 900; color: #0f172a; line-height: 1.15; height: 2.3em; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;">
+                                    ${escapeHtml(car["型號"] || '--')}
+                                </div>
+                            </div>
+
+                            <div style="border-top: 1px solid #f1f5f9; padding-top: 2.5px;">
+                                <div style="display: flex; justify-content: space-between; font-size: 7px; color: #475569; font-weight: bold; margin-bottom: 2px;">
+                                    <span>${escapeHtml(car["年份"])} 年</span>
+                                    <span>${formatMileage(car["里程"])}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                                    <span style="font-size: 6.5px; font-weight: bold; border: 1px solid #cbd5e1; padding: 1px 3px; border-radius: 2.5px; background: #f8fafc; color: #334155; max-width: 58px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                        ${escapeHtml(car["在庫位子"] || "展間")}
+                                    </span>
+                                    <span style="font-size: 14px; font-weight: 900; color: #dc2626; font-family: monospace; line-height: 1; letter-spacing: -0.5px;">
+                                        ${escapeHtml(displayPrice)}<span style="font-size: 8.5px; font-weight: bold; margin-left: 1px;">萬</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += `
+                    </div>
+                </div>
+            `;
+
+            printContainer.innerHTML = html;
+            closePrintModal();
+
+            setTimeout(() => {
+                window.print();
+            }, 300);
+        }
+
+        function openLightbox(index, photoArray) {
+            if (!photoArray || photoArray.length === 0) return;
+            lightboxImages = photoArray;
+            currentLightboxIndex = index;
+
+            const lightbox = document.getElementById('lightbox-modal');
+            const lightboxImg = document.getElementById('lightbox-img');
+            const prevBtn = document.getElementById('lightbox-prev-btn');
+            const nextBtn = document.getElementById('lightbox-next-btn');
+
+            if (lightboxImages.length > 1) {
+                prevBtn.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+            } else {
+                prevBtn.classList.add('hidden');
+                nextBtn.classList.add('hidden');
+            }
+
+            updateLightboxImage();
+            lightbox.classList.remove('hidden');
+
+            setTimeout(() => {
+                lightboxImg.classList.remove('scale-95', 'opacity-0');
+                lightboxImg.classList.add('scale-100', 'opacity-100');
+            }, 50);
+        }
+
+        function updateLightboxImage() {
+            const lightboxImg = document.getElementById('lightbox-img');
+            lightboxImg.classList.add('opacity-0'); 
+            setTimeout(() => {
+                lightboxImg.src = lightboxImages[currentLightboxIndex];
+                lightboxImg.classList.remove('opacity-0');
+            }, 150);
+        }
+
+        function nextLightboxImage(event) {
+            if (event) event.stopPropagation(); 
+            if (lightboxImages.length <= 1) return;
+            currentLightboxIndex = (currentLightboxIndex + 1) % lightboxImages.length;
+            updateLightboxImage();
+        }
+
+        function prevLightboxImage(event) {
+            if (event) event.stopPropagation(); 
+            if (lightboxImages.length <= 1) return;
+            currentLightboxIndex = (currentLightboxIndex - 1 + lightboxImages.length) % lightboxImages.length;
+            updateLightboxImage();
+        }
+
+        function closeLightbox(e) {
+            if (e && (e.target.id === 'lightbox-img' || e.target.closest('#lightbox-prev-btn') || e.target.closest('#lightbox-next-btn'))) return;
+            
+            const lightbox = document.getElementById('lightbox-modal');
+            const lightboxImg = document.getElementById('lightbox-img');
+            
+            lightboxImg.classList.remove('scale-100', 'opacity-100');
+            lightboxImg.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                lightbox.classList.add('hidden');
+                lightboxImg.src = '';
+                lightboxImages = [];
+            }, 300);
+        }
+
+        function initLightboxGestures() {
+            document.addEventListener('keydown', (e) => {
+                const lightbox = document.getElementById('lightbox-modal');
+                if (lightbox && !lightbox.classList.contains('hidden')) {
+                    if (e.key === 'ArrowRight' || e.key === 'Right') {
+                        nextLightboxImage();
+                    } else if (e.key === 'ArrowLeft' || e.key === 'Left') {
+                        prevLightboxImage();
+                    } else if (e.key === 'Escape') {
+                        closeLightbox();
+                    }
+                }
+            });
+
+            const lightboxModal = document.getElementById('lightbox-modal');
+            lightboxModal.addEventListener('touchstart', (e) => {
+                touchStartX = e.changedTouches[0].screenX;
+            }, { passive: true });
+
+            lightboxModal.addEventListener('touchend', (e) => {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipeGesture();
+            }, { passive: true });
+        }
+
+        function handleSwipeGesture() {
+            const swipeThreshold = 50; 
+            if (lightboxImages.length <= 1) return;
+
+            if (touchStartX - touchEndX > swipeThreshold) {
+                nextLightboxImage();
+            } else if (touchEndX - touchStartX > swipeThreshold) {
+                prevLightboxImage();
+            }
+        }
+
+        async function handleDownloadAll() {
+            if (!currentSelectedCar) return;
+            const car = currentSelectedCar;
+            const otherPhotos = parseOtherPhotos(car["other照片"] || car["其他照片"]); 
+            
+            const allPhotos = [];
+            if (car["封面圖片"]) allPhotos.push(getDirectImageUrl(car["封面圖片"]));
+            otherPhotos.forEach(p => {
+                allPhotos.push(getDirectImageUrl(p));
+            });
+
+            if (allPhotos.length === 0) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: '未設定相片',
+                    text: '此車輛沒有可供下載的封面圖片或相簿照片。',
+                    confirmButtonColor: '#10b981'
+                });
+                return;
+            }
+
+            const modalContainer = document.createElement('div');
+            modalContainer.className = "text-left space-y-4";
+
+            const photoGrid = document.createElement('div');
+            photoGrid.className = "grid grid-cols-1 gap-3.5 max-h-[45vh] overflow-y-auto pr-1.5";
+
+            allPhotos.forEach((photoUrl, pIdx) => {
+                const cleanedBrand = String(car["廠牌"]).replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, "_");
+                const cleanedModel = String(car["型號"]).replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, "_");
+                const vehicleYear = car["年份"] || "0000";
+                const fileName = `${cleanedBrand}_${cleanedModel}_${vehicleYear}_照片_${pIdx + 1}.jpg`;
+
+                const photoRow = document.createElement('div');
+                photoRow.className = "bg-white rounded-2xl p-3 border border-slate-150 shadow-sm flex flex-col sm:flex-row gap-3 items-center";
+
+                photoRow.innerHTML = `
+                    <div class="w-full sm:w-36 h-24 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0 relative">
+                        <img src="${photoUrl}" referrerpolicy="no-referrer" class="w-full h-full object-cover" onerror="this.src='${placeholderImages[pIdx % placeholderImages.length]}'">
+                        <span class="absolute top-1.5 left-1.5 bg-slate-900/85 text-white text-[9px] font-black px-2 py-0.5 rounded shadow-md">圖 ${pIdx + 1}</span>
+                    </div>
+                    <div class="w-full flex-grow flex flex-col md:flex-row justify-between items-center gap-2">
+                        <div class="text-center sm:text-left min-w-0">
+                            <p class="text-[9px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">預計保存檔名</p>
+                            <p class="text-xs font-black text-slate-700 truncate max-w-[200px]">${escapeHtml(fileName)}</p>
+                        </div>
+                        <a href="${photoUrl}" target="_blank" download="${fileName}" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-black px-3.5 py-2 rounded-xl transition-all shadow flex items-center justify-center gap-1">
+                            <i class="fa-solid fa-circle-arrow-down text-emerald-500"></i> 下載相片
+                        </a>
+                    </div>
+                `;
+                photoGrid.appendChild(photoRow);
+            });
+
+            modalContainer.appendChild(photoGrid);
+
+            Swal.fire({
+                title: '<span class="text-slate-950 font-black text-base md:text-lg flex items-center justify-center gap-2"><i class="fa-solid fa-photo-film text-emerald-600"></i>相片下載中心</span>',
+                html: modalContainer,
+                showConfirmButton: true,
+                confirmButtonText: '關閉視窗',
+                confirmButtonColor: '#10b981',
+                customClass: {
+                    popup: 'rounded-[28px] border border-slate-200 shadow-2xl p-6 max-w-[640px] w-full bg-white',
+                    title: 'font-black tracking-tight border-b border-slate-150 pb-3.5',
+                    confirmButton: 'font-black px-6 py-3.5 rounded-2xl text-sm w-full shadow-lg shadow-emerald-100 mt-2'
+                }
+            });
+        }
+
+        function closeModal() {
+            const modal = document.getElementById('detail-modal');
+            const modalCard = document.getElementById('modal-card');
+            modalCard.classList.remove('scale-100', 'opacity-100'); 
+            modalCard.classList.add('scale-95', 'opacity-0');
+            modal.classList.remove('opacity-100');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.style.overflow = '';
+                currentSelectedCar = null; 
+            }, 300);
+        }
+
+        document.getElementById('detail-modal').onclick = function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        };
+    </script>
+</body>
+</html>
