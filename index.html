@@ -254,7 +254,7 @@
                     </div>
                     <div>
                         <h1 class="text-xl md:text-2xl font-black text-slate-850 tracking-tighter">在庫車輛 <span class="text-emerald-600">線上車源總表</span></h1>
-                        <p class="text-[10px] text-slate-400 font-bold tracking-wider mt-0.5 uppercase">Premium v6.0 </p>
+                        <p class="text-[10px] text-slate-400 font-bold tracking-wider mt-0.5 uppercase">人才阿~人才 v6.0 </p>
                     </div>
                 </div>
                 <div class="flex gap-2 w-full md:w-auto">
@@ -681,7 +681,8 @@
                 tagGap: 'gap-1',
                 priceWidth: '32',
                 pricePadding: 'p-2',
-                priceText: 'text-xl md:text-2xl'
+                /* 💡 簡約模式價格 */
+                priceText: 'text-2xl md:text-3xl'
             },
             normal: {
                 thPadding: 'p-3 text-xs',
@@ -695,7 +696,8 @@
                 tagGap: 'gap-1.5 md:gap-2',
                 priceWidth: '48',
                 pricePadding: 'p-4 md:p-5',
-                priceText: 'text-2xl md:text-3xl'
+                /* 💡 正常模式：大幅放大價格數字 */
+                priceText: 'text-3xl md:text-4xl lg:text-5xl'
             },
             large: {
                 thPadding: 'p-4 text-sm',
@@ -709,7 +711,8 @@
                 tagGap: 'gap-2 md:gap-3',
                 priceWidth: '56',
                 pricePadding: 'p-5 md:p-6',
-                priceText: 'text-3xl md:text-4xl'
+                /* 💡 放大模式：特大價格顯示 */
+                priceText: 'text-4xl md:text-5xl lg:text-6xl'
             }
         };
 
@@ -1346,18 +1349,24 @@
                 if (hasDiscount) {
                     priceDisplayHtml = `
                         <div class="text-right">
-                            <div class="text-[10px] text-slate-400 line-through font-mono font-bold">${car["開價"]} 萬</div>
+                            <!-- 💡 加大加粗「網路公開價」標籤 (font-black text-xs md:text-sm) -->
+                            <p class="text-xs md:text-sm font-black text-rose-700/80 uppercase tracking-wider mb-0.5">網路公開價</p>
+                            <div class="text-xs md:text-sm text-slate-400 line-through font-mono font-bold">${car["開價"]} 萬</div>
                             <div class="flex items-end justify-end gap-0.5">
-                                <span class="${sc.priceText} font-black text-rose-600 font-mono tracking-tighter italic">${car["新價格"]}</span>
-                                <span class="text-xs font-black text-rose-600 mb-1">萬</span>
+                                <span class="${sc.priceText} font-black text-rose-600 font-mono tracking-tighter italic leading-none">${car["新價格"]}</span>
+                                <span class="text-sm md:text-lg font-black text-rose-600 mb-0.5 ml-0.5">萬</span>
                             </div>
                         </div>
                     `;
                 } else {
                     priceDisplayHtml = `
-                        <div class="flex items-end justify-end gap-0.5">
-                            <span class="${sc.priceText} font-black ${isSold ? 'text-slate-400 line-through' : 'text-rose-600'} font-mono tracking-tighter">${car["開價"] || '--'}</span>
-                            <span class="text-xs font-black ${isSold ? 'text-slate-400' : 'text-rose-600'} mb-1">萬</span>
+                        <div class="text-right">
+                            <!-- 💡 加大加粗「網路公開價」標籤 (font-black text-xs md:text-sm) -->
+                            <p class="text-xs md:text-sm font-black text-slate-500 uppercase tracking-wider mb-1">網路公開價</p>
+                            <div class="flex items-end justify-end gap-0.5">
+                                <span class="${sc.priceText} font-black ${isSold ? 'text-slate-400 line-through' : 'text-rose-600'} font-mono tracking-tighter leading-none">${car["開價"] || '--'}</span>
+                                <span class="text-sm md:text-lg font-black ${isSold ? 'text-slate-400' : 'text-rose-600'} mb-0.5 ml-0.5">萬</span>
+                            </div>
                         </div>
                     `;
                 }
