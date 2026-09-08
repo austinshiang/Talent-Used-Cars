@@ -660,7 +660,7 @@
 
             <div class="p-6 bg-slate-50 border-t border-slate-150 flex flex-col sm:flex-row gap-3 justify-end">
                 <button id="btn-share-car" onclick="shareCurrentCar()" class="bg-blue-600 hover:bg-blue-500 text-white font-black py-3.5 px-6 rounded-2xl text-center text-sm shadow-md flex items-center justify-center gap-2 transition-all active:scale-95">
-                    <i class="fa-solid fa-share-nodes"></i> 分享此車輛 (支援Line/FB動態卡片)
+                    <i class="fa-solid fa-share-nodes"></i> 分享此車輛
                 </button>
                 <button id="btn-download-photos" onclick="handleDownloadAll()" class="bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-black py-3.5 px-6 rounded-2xl text-center text-sm shadow-sm flex items-center justify-center gap-2 transition-all">
                     <i class="fa-solid fa-circle-arrow-down text-emerald-600"></i> 下載所有照片
@@ -694,7 +694,7 @@
     </footer>
 
     <script>
-        const apiUrl = "https://script.google.com/macros/s/AKfycbz2DbEy-6I4QDXvgvgODHSOPhNEtPAbuOMx91Mf0CKe_PURWDgLPuycDWIJXp_ZmL3L/exec";
+        const apiUrl = "https://script.google.com/macros/s/AKfycbyQTRj5l7qP1C8_uNCyQGQTGCzJRdohY0VfwO1xDC5ua0Oa5jAgwdK-dkAeepU2Zgce/exec";
         const currentSystemDate = new Date();
         
         let cars = [];
@@ -1159,8 +1159,8 @@
                     toast: true,
                     position: 'top-end',
                     icon: 'success',
-                    title: '專屬預覽連結已複製到剪貼簿！',
-                    text: '貼至 Line 將會自動生成車輛照片卡片。',
+                    title: '專屬連結已複製到剪貼簿！',
+                    text: '',
                     showConfirmButton: false,
                     timer: 3000
                 });
